@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Phoenix Fit">
+<meta name="theme-color" content="#0c0f14">
+<title>Phoenix Fitness Tracker</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%230c0f14' width='180' height='180' rx='40'/><text x='90' y='120' font-size='100' text-anchor='middle' fill='%23C8191E'>🔥</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0c0f14;--bg2:#111827;--card:#141924;--card2:#1a1f2e;--border:#1e293b;--border2:#334155;--text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--text4:#475569;--red:#C8191E;--green:#4ade80;--yellow:#fbbf24;--blue:#38bdf8;--purple:#818cf8;--orange:#f97316;--danger:#f87171}
+body{font-family:-apple-system,SF Pro Display,system-ui,sans-serif;background:linear-gradient(180deg,var(--bg),var(--bg2));color:var(--text);min-height:100vh;min-height:100dvh;padding-bottom:env(safe-area-inset-bottom)}
+input,textarea,select,button{font-family:inherit;font-size:16px}
+input[type=range]{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border2);outline:none;margin:8px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--red);cursor:pointer;border:3px solid var(--bg)}
+
+.container{max-width:480px;margin:0 auto;padding:0 0 100px}
+.header{display:flex;justify-content:space-between;align-items:center;padding:max(env(safe-area-inset-top),16px) 20px 12px;border-bottom:1px solid var(--border)}
+.title{font-size:22px;font-weight:900;letter-spacing:4px;color:var(--red);line-height:1}
+.subtitle{font-size:10px;letter-spacing:3px;color:var(--text3);font-weight:600;margin-top:4px}
+.streak-box{display:flex;flex-direction:column;align-items:center;background:linear-gradient(135deg,var(--border),#0f172a);border-radius:12px;padding:8px 16px;border:1px solid var(--border2)}
+.streak-num{font-size:22px;font-weight:900;color:var(--yellow)}
+.streak-lbl{font-size:9px;color:var(--text2);letter-spacing:1px;text-transform:uppercase}
+
+/* Nav */
+.nav{display:flex;gap:4px;padding:12px 20px;position:sticky;top:0;z-index:10;background:var(--bg)}
+.nav-btn{flex:1;padding:8px 0;border:none;border-radius:10px;background:transparent;color:var(--text3);font-size:13px;font-weight:600;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .2s}
+.nav-btn.active{background:linear-gradient(135deg,var(--border),var(--border2));color:var(--text);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.nav-icon{font-size:16px}
+.nav-label{font-size:10px}
+
+/* Quick stats */
+.quick-stats{display:flex;align-items:center;justify-content:space-around;padding:16px 20px;margin:0 20px 8px;background:linear-gradient(135deg,var(--card2),var(--card));border-radius:16px;border:1px solid var(--border)}
+.qs-item{display:flex;flex-direction:column;align-items:center}
+.qs-val{font-size:20px;font-weight:800;font-variant-numeric:tabular-nums}
+.qs-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
+.qs-div{width:1px;height:32px;background:var(--border)}
+
+.section{padding:8px 20px}
+.section-title{font-size:14px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:2px;margin-bottom:16px}
+
+/* Date picker */
+.date-picker{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:12px 8px;background:var(--card2);border-radius:14px;border:1px solid var(--border)}
+.date-arrow{background:none;border:none;color:var(--text3);font-size:18px;cursor:pointer;padding:8px 12px;border-radius:8px}
+.date-center{display:flex;align-items:center;gap:8px}
+.date-day{font-size:14px;font-weight:700;color:var(--text2)}
+.date-str{font-size:18px;font-weight:800}
+.today-badge{font-size:9px;font-weight:800;color:var(--red);background:rgba(200,25,30,.15);padding:2px 8px;border-radius:6px;letter-spacing:1px}
+
+/* Form */
+.form-grid{display:flex;flex-direction:column;gap:16px}
+.input-group{display:flex;flex-direction:column;gap:6px}
+.label{font-size:13px;font-weight:700;color:var(--text2)}
+.input{background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--text);font-weight:600;outline:none;font-variant-numeric:tabular-nums;width:100%}
+.textarea{background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;color:var(--text);font-size:14px;outline:none;resize:vertical;width:100%}
+
+/* Progress bar */
+.progress{height:4px;background:var(--border);border-radius:4px;overflow:hidden;margin-top:4px}
+.progress-fill{height:100%;border-radius:4px;transition:width .4s ease,background-color .3s}
+
+/* Counter */
+.counter-row{display:flex;align-items:center;justify-content:center;gap:12px;background:var(--card2);border:1px solid var(--border2);border-radius:10px;padding:8px}
+.counter-btn{width:40px;height:40px;border-radius:10px;border:1px solid var(--text3);background:var(--border2);color:var(--text);font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.counter-val{font-size:20px;font-weight:800;min-width:48px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* Toggle */
+.toggle-row{display:flex;align-items:center;gap:12px}
+.toggle{width:52px;height:28px;border-radius:14px;border:none;cursor:pointer;position:relative;transition:background-color .3s;flex-shrink:0}
+.toggle-dot{width:22px;height:22px;border-radius:11px;background:#fff;position:absolute;top:3px;transition:transform .3s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+
+/* Training buttons */
+.training-btns{display:flex;gap:8px}
+.training-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px;background:var(--card2);border:2px solid var(--border2);border-radius:12px;color:var(--text2);cursor:pointer;font-weight:600;font-size:11px;gap:2px}
+.training-btn.active{border-color:var(--red);background:rgba(200,25,30,.1);color:var(--text)}
+.training-icon{font-size:18px}
+
+/* Treadmill */
+.tm-panel{margin-top:12px;padding:16px;background:linear-gradient(135deg,#0f1a2e,var(--card2));border-radius:14px;border:1px solid #1e3a5f}
+.tm-header{display:flex;align-items:center;gap:8px}
+.tm-cal-badge{margin-left:auto;font-size:13px;font-weight:800;color:var(--orange);background:rgba(249,115,22,.12);padding:4px 10px;border-radius:8px}
+.slider-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text4);margin-top:2px;padding:0 2px}
+.tm-summary{display:flex;align-items:center;justify-content:space-around;padding:14px 8px;background:#0c1220;border-radius:12px;border:1px solid var(--border);margin-top:16px}
+.tm-sum-item{display:flex;flex-direction:column;align-items:center;gap:2px}
+.tm-sum-val{font-size:18px;font-weight:900}
+.tm-sum-lbl{font-size:11px;color:var(--text3)}
+
+/* Food */
+.food-mode-row{display:flex;gap:6px;margin-bottom:16px}
+.food-mode-btn{flex:1;padding:10px 8px;border:2px solid var(--border2);border-radius:10px;background:var(--card2);color:var(--text2);font-size:12px;font-weight:700;cursor:pointer;text-align:center}
+.food-mode-btn.active{border-color:var(--red);background:rgba(200,25,30,.1);color:var(--text)}
+.food-btn{width:100%;padding:14px;margin-top:10px;background:linear-gradient(135deg,#6366f1,#4f46e5);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:800;cursor:pointer}
+.food-error{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.3);border-radius:10px;padding:10px 14px;color:#fca5a5;font-size:13px;margin-bottom:16px}
+.food-totals{display:flex;align-items:center;justify-content:space-around;padding:16px 12px;background:linear-gradient(135deg,var(--card2),var(--card));border-radius:16px;border:1px solid var(--border);margin-bottom:20px}
+.food-total-item{display:flex;flex-direction:column;align-items:center}
+.food-total-val{font-size:22px;font-weight:900}
+.food-total-lbl{font-size:11px;color:var(--text3)}
+.food-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:var(--card);border-radius:12px;border:1px solid var(--border);margin-bottom:8px}
+.food-item-name{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.food-item-meta{font-size:11px;color:var(--text3)}
+.food-item-macros{display:flex;flex-direction:column;align-items:flex-end;font-size:11px;font-weight:600;gap:2px}
+.food-del{width:28px;height:28px;border-radius:7px;border:1px solid var(--border2);background:transparent;color:var(--danger);font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.empty-food{display:flex;flex-direction:column;align-items:center;padding:32px 16px;background:var(--card);border-radius:14px;border:1px dashed var(--border2);margin-bottom:16px;text-align:center}
+
+/* Food add row for manual */
+.food-add-grid{display:grid;grid-template-columns:1fr 80px 80px;gap:8px;margin-bottom:8px}
+.food-add-grid .input{font-size:14px;padding:10px}
+
+/* Camera */
+.camera-wrap{position:relative;width:100%;height:220px;border-radius:14px;overflow:hidden;background:#0a0d12;border:1px solid var(--border2);margin-top:8px}
+.camera-video{width:100%;height:100%;object-fit:cover}
+.camera-scanline{position:absolute;top:50%;left:10%;width:80%;height:2px;background:var(--red);box-shadow:0 0 12px var(--red);animation:scanPulse 1.5s ease-in-out infinite}
+@keyframes scanPulse{0%,100%{opacity:.4;transform:scaleX(.95)}50%{opacity:1;transform:scaleX(1)}}
+.camera-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.stop-cam-btn{width:100%;padding:10px;margin-top:8px;background:var(--border2);border:none;border-radius:10px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer}
+
+/* Buttons */
+.save-btn{flex:1;padding:14px;background:linear-gradient(135deg,var(--red),#a01518);border:none;border-radius:12px;color:#fff;font-size:15px;font-weight:800;cursor:pointer;letter-spacing:1px;width:100%}
+.delete-btn{padding:14px 18px;background:var(--border);border:1px solid var(--border2);border-radius:12px;color:var(--danger);font-size:16px;cursor:pointer}
+.action-row{display:flex;gap:12px;margin-top:24px}
+
+/* Stats */
+.stats-row{display:flex;gap:8px;margin-bottom:8px}
+.stat-card{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 6px;background:var(--card);border-radius:14px;border:1px solid var(--border)}
+.stat-val{font-size:24px;font-weight:900}
+.stat-lbl{font-size:10px;color:var(--text3)}
+
+/* Chart */
+.chart-wrap{background:var(--card);border-radius:16px;padding:16px 12px 12px;border:1px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.chart-bar-row{display:flex;align-items:flex-end;gap:4px;height:160px;padding:0 4px}
+.chart-bar{flex:1;border-radius:4px 4px 0 0;min-width:16px;position:relative;transition:height .3s}
+.chart-bar-label{position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--text3);white-space:nowrap}
+.chart-bar-val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;white-space:nowrap}
+
+/* Milestones */
+.milestone{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border-radius:12px;border:2px solid var(--border2);margin-bottom:8px;transition:all .3s}
+.milestone.reached{border-color:var(--green);opacity:1}
+.milestone.pending{opacity:.5}
+.target-badge{font-size:9px;font-weight:800;color:var(--yellow);background:rgba(251,191,36,.15);padding:2px 8px;border-radius:6px;letter-spacing:1px;margin-left:auto}
+
+.recent-item{display:flex;justify-content:space-between;padding:10px 14px;background:var(--card);border-radius:10px;border:1px solid var(--border);margin-bottom:4px}
+
+.empty-text{color:var(--text4);text-align:center;padding:40px 0;font-size:14px}
+.footer{text-align:center;padding:32px 20px 16px;color:var(--text4);font-size:11px}
+
+/* Weight chart line */
+.weight-chart{position:relative;height:200px;padding:0 4px}
+.weight-dots{display:flex;align-items:flex-end;height:100%;gap:0}
+</style>
+</head>
+<body>
+<div class="container" id="app"></div>
+
+<script>
+// ═══════════════════════════════════════
+// PHOENIX FITNESS TRACKER — Standalone
+// ═══════════════════════════════════════
+
+const GOALS={calories:2200,protein:160,creatine:5,water:3,coffeeMax:4,targetWeight:110,startWeight:115};
+const STORAGE_KEY="phoenix-fitness-data";
+const DAYS_NL=["Zo","Ma","Di","Wo","Do","Vr","Za"];
+const MONTHS_NL=["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"];
+
+function formatDate(s){const d=new Date(s);return `${d.getDate()} ${MONTHS_NL[d.getMonth()]}`}
+function todayStr(){return new Date().toISOString().slice(0,10)}
+function dayLabel(s){return DAYS_NL[new Date(s).getDay()]}
+function defaultEntry(){return{weight:"",calories:"",protein:"",water:0,coffee:0,creatine:true,training:"rust",treadmill:{speed:4,duration:60},foods:[],notes:""}}
+
+function getTreadmillMET(s){
+  if(s<=2.5)return 2.5;if(s<=3)return 2.8;if(s<=3.5)return 3;if(s<=4)return 3.5;if(s<=4.5)return 3.8;
+  if(s<=5)return 4.3;if(s<=5.5)return 4.8;if(s<=6)return 5.5;if(s<=6.5)return 6.3;if(s<=7)return 7;
+  if(s<=8)return 8.3;if(s<=9)return 9.8;if(s<=10)return 10.5;return 11.5;
+}
+function calcTMCal(speed,dur,wt=115){return Math.round((getTreadmillMET(speed)*wt*dur)/60)}
+function speedLabel(s){
+  if(s<=3.5)return"🐌 Rustig wandelen";if(s<=5)return"🚶 Stevig wandelen";
+  if(s<=6.5)return"🏃 Snel wandelen";if(s<=8)return"🏃‍♂️ Joggen";
+  if(s<=10)return"🏃‍♂️💨 Hardlopen";return"🚀 Sprint";
+}
+
+// ── State ──
+let state={
+  entries:JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}"),
+  selectedDate:todayStr(),
+  view:"log",
+  foodMode:"manual",
+  scanning:false,
+};
+let currentEntry=state.entries[state.selectedDate]||defaultEntry();
+let videoStream=null;
+let scanInterval=null;
+
+function save(){
+  state.entries[state.selectedDate]=currentEntry;
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state.entries));
+}
+function deleteDay(){
+  delete state.entries[state.selectedDate];
+  currentEntry=defaultEntry();
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(state.entries));
+  render();
+}
+function changeDate(offset){
+  const d=new Date(state.selectedDate);
+  d.setDate(d.getDate()+offset);
+  state.selectedDate=d.toISOString().slice(0,10);
+  currentEntry=state.entries[state.selectedDate]||defaultEntry();
+  render();
+}
+function setView(v){state.view=v;stopCamera();render()}
+
+// ── Food functions ──
+function addFood(item){
+  if(!currentEntry.foods)currentEntry.foods=[];
+  currentEntry.foods.push({...item,id:Date.now()+Math.random()});
+  recalcFoodTotals();
+  render();
+}
+function removeFood(id){
+  currentEntry.foods=currentEntry.foods.filter(f=>f.id!==id);
+  recalcFoodTotals();
+  render();
+}
+function recalcFoodTotals(){
+  const f=currentEntry.foods||[];
+  currentEntry.calories=String(f.reduce((s,x)=>s+(x.calories||0),0));
+  currentEntry.protein=String(f.reduce((s,x)=>s+(x.protein||0),0));
+}
+
+async function lookupBarcode(code){
+  const res=await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json`);
+  const data=await res.json();
+  if(data.status!==1)throw new Error("Niet gevonden");
+  const p=data.product,n=p.nutriments||{};
+  return{
+    name:p.product_name||p.product_name_nl||"Onbekend",
+    calories:Math.round(n["energy-kcal_100g"]||n["energy-kcal"]||0),
+    protein:Math.round((n.proteins_100g||n.proteins||0)*10)/10,
+    amount:p.quantity||"100g",
+    brand:p.brands||"",
+    image:p.image_front_small_url||""
+  };
+}
+
+// ── Camera ──
+async function startCamera(){
+  state.scanning=true;render();
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:1280},height:{ideal:720}}});
+    videoStream=stream;
+    const vid=document.getElementById("cam-video");
+    if(vid){vid.srcObject=stream;await vid.play()}
+    if("BarcodeDetector" in window){
+      const det=new BarcodeDetector({formats:["ean_13","ean_8","upc_a","upc_e"]});
+      scanInterval=setInterval(async()=>{
+        const v=document.getElementById("cam-video");
+        if(v&&v.readyState===4){
+          try{
+            const bc=await det.detect(v);
+            if(bc.length>0){clearInterval(scanInterval);handleBarcode(bc[0].rawValue)}
+          }catch(e){}
+        }
+      },500);
+    }else{
+      showError("Camera scanner niet beschikbaar. Voer barcode handmatig in.");
+      stopCamera();
+    }
+  }catch(e){showError("Camera niet beschikbaar.");state.scanning=false;render()}
+}
+function stopCamera(){
+  if(scanInterval)clearInterval(scanInterval);
+  if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null}
+  state.scanning=false;
+}
+
+let errorMsg="";
+function showError(msg){errorMsg=msg;render();setTimeout(()=>{errorMsg="";render()},4000)}
+
+async function handleBarcode(code){
+  try{
+    const item=await lookupBarcode(code);
+    addFood(item);
+    stopCamera();
+  }catch(e){showError(`Barcode "${code}" niet gevonden.`)}
+  render();
+}
+
+// ── Computed stats ──
+function getStats(){
+  const dates=Object.keys(state.entries).sort();
+  const weightData=dates.filter(d=>state.entries[d].weight).map(d=>({date:formatDate(d),weight:parseFloat(state.entries[d].weight),day:dayLabel(d),raw:d}));
+  const calData=dates.slice(-14).filter(d=>state.entries[d].calories).map(d=>({date:formatDate(d),cal:parseInt(state.entries[d].calories)}));
+  const last=weightData.length?weightData[weightData.length-1].weight:null;
+  const first=weightData.length?weightData[0].weight:null;
+  const loss=first&&last?(first-last).toFixed(1):null;
+  const avgCal=calData.length?Math.round(calData.reduce((s,d)=>s+d.cal,0)/calData.length):null;
+  const crDays=dates.filter(d=>state.entries[d].creatine).length;
+  let crStreak=0;for(let i=dates.length-1;i>=0;i--){if(state.entries[dates[i]].creatine)crStreak++;else break}
+  const tmDays=dates.filter(d=>state.entries[d].training==="loopband"&&state.entries[d].treadmill);
+  const tmCal=tmDays.reduce((s,d)=>s+calcTMCal(state.entries[d].treadmill?.speed||4,state.entries[d].treadmill?.duration||60),0);
+  const tmKm=tmDays.reduce((s,d)=>s+((state.entries[d].treadmill?.speed||4)*(state.entries[d].treadmill?.duration||60)/60),0);
+  const tmMin=tmDays.reduce((s,d)=>s+(state.entries[d].treadmill?.duration||60),0);
+  const avgWater=dates.length?(dates.reduce((s,d)=>s+(state.entries[d].water||0),0)/dates.length).toFixed(1):"—";
+  const avgCoffee=dates.length?(dates.reduce((s,d)=>s+(state.entries[d].coffee||0),0)/dates.length).toFixed(1):"—";
+  const waterPct=dates.length?Math.round((dates.filter(d=>(state.entries[d].water||0)>=GOALS.water).length/dates.length)*100):0;
+  return{dates,weightData,calData,last,first,loss,avgCal,crDays,crStreak,tmDays:tmDays.length,tmCal,tmKm,tmMin,total:dates.length,avgWater,avgCoffee,waterPct};
+}
+
+// ═══ RENDER ═══
+function render(){
+  const s=getStats();
+  const e=currentEntry;
+  const foods=e.foods||[];
+  const fCal=foods.reduce((s,f)=>s+(f.calories||0),0);
+  const fProt=foods.reduce((s,f)=>s+(f.protein||0),0);
+  const isToday=state.selectedDate===todayStr();
+  const tmCal=calcTMCal(e.treadmill?.speed||4,e.treadmill?.duration||60);
+
+  let h=`
+  <!-- Header -->
+  <div class="header">
+    <div><div class="title">PHOENIX</div><div class="subtitle">FITNESS TRACKER</div></div>
+    <div class="streak-box"><span class="streak-num">${s.crStreak}</span><span class="streak-lbl">dag streak</span></div>
+  </div>
+
+  <!-- Nav -->
+  <div class="nav">
+    ${["log","voeding","stats","weight"].map(v=>`
+      <button class="nav-btn ${state.view===v?"active":""}" onclick="setView('${v}')">
+        <span class="nav-icon">${v==="log"?"📝":v==="voeding"?"🍽️":v==="stats"?"📊":"⚖️"}</span>
+        <span class="nav-label">${v==="log"?"Log":v==="voeding"?"Voeding":v==="stats"?"Stats":"Gewicht"}</span>
+      </button>`).join("")}
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="quick-stats">
+    <div class="qs-item"><span class="qs-val">${s.last??"—"}</span><span class="qs-label">kg nu</span></div>
+    <div class="qs-div"></div>
+    <div class="qs-item"><span class="qs-val" style="color:${s.loss>0?"var(--green)":s.loss<0?"var(--danger)":"var(--text)"}">${s.loss?`${s.loss>0?"-":"+"}${Math.abs(s.loss)}`:"—"}</span><span class="qs-label">kg totaal</span></div>
+    <div class="qs-div"></div>
+    <div class="qs-item"><span class="qs-val">${s.avgCal??"—"}</span><span class="qs-label">kcal gem.</span></div>
+    <div class="qs-div"></div>
+    <div class="qs-item"><span class="qs-val">${s.total}</span><span class="qs-label">dagen</span></div>
+  </div>`;
+
+  // ── Date Picker ──
+  const datePicker=`
+  <div class="date-picker">
+    <button class="date-arrow" onclick="changeDate(-1)">◀</button>
+    <div class="date-center">
+      <span class="date-day">${dayLabel(state.selectedDate)}</span>
+      <span class="date-str">${formatDate(state.selectedDate)}</span>
+      ${isToday?'<span class="today-badge">VANDAAG</span>':""}
+    </div>
+    <button class="date-arrow" onclick="changeDate(1)">▶</button>
+  </div>`;
+
+  // ═══ LOG VIEW ═══
+  if(state.view==="log"){
+    h+=`<div class="section">${datePicker}
+    <div class="form-grid">
+      <div class="input-group"><label class="label">⚖️ Gewicht (kg)</label>
+        <input class="input" type="number" step="0.1" value="${e.weight}" placeholder="bv. 114.5" onchange="currentEntry.weight=this.value;render()">
+      </div>
+
+      <div class="input-group"><label class="label">🔥 Calorieën ${foods.length?`<span style="color:var(--text4);font-weight:400">(voeding: ${fCal})</span>`:""}</label>
+        <input class="input" type="number" value="${e.calories}" placeholder="doel: ${GOALS.calories}" onchange="currentEntry.calories=this.value;render()">
+        ${e.calories?`<div class="progress"><div class="progress-fill" style="width:${Math.min(100,parseInt(e.calories)/GOALS.calories*100)}%;background:${parseInt(e.calories)>GOALS.calories?"var(--danger)":parseInt(e.calories)>GOALS.calories*.9?"var(--yellow)":"var(--green)"}"></div></div>`:""}
+      </div>
+
+      <div class="input-group"><label class="label">💪 Eiwit (g) ${foods.length?`<span style="color:var(--text4);font-weight:400">(voeding: ${Math.round(fProt)}g)</span>`:""}</label>
+        <input class="input" type="number" value="${e.protein}" placeholder="doel: ${GOALS.protein}g" onchange="currentEntry.protein=this.value;render()">
+        ${e.protein?`<div class="progress"><div class="progress-fill" style="width:${Math.min(100,parseInt(e.protein)/GOALS.protein*100)}%;background:${parseInt(e.protein)>=GOALS.protein?"var(--green)":parseInt(e.protein)>=GOALS.protein*.8?"var(--yellow)":"var(--danger)"}"></div></div>`:""}
+      </div>
+
+      <!-- Water & Coffee -->
+      <div style="display:flex;gap:12px">
+        <div class="input-group" style="flex:1">
+          <label class="label">💧 Water (L)</label>
+          <div class="counter-row">
+            <button class="counter-btn" onclick="currentEntry.water=Math.max(0,(currentEntry.water||0)-0.25);render()">−</button>
+            <span class="counter-val" style="color:${(e.water||0)>=GOALS.water?"var(--green)":"var(--text)"}">${(e.water||0).toFixed(2).replace(/\.?0+$/,"")||"0"}L</span>
+            <button class="counter-btn" onclick="currentEntry.water=(currentEntry.water||0)+0.25;render()">+</button>
+          </div>
+          <div class="progress"><div class="progress-fill" style="width:${Math.min(100,(e.water||0)/GOALS.water*100)}%;background:${(e.water||0)>=GOALS.water?"var(--green)":"var(--blue)"}"></div></div>
+          <span style="font-size:10px;color:var(--text3);margin-top:2px">doel: ${GOALS.water}L</span>
+        </div>
+        <div class="input-group" style="flex:1">
+          <label class="label">☕ Koffie</label>
+          <div class="counter-row">
+            <button class="counter-btn" onclick="currentEntry.coffee=Math.max(0,(currentEntry.coffee||0)-1);render()">−</button>
+            <span class="counter-val" style="color:${(e.coffee||0)>GOALS.coffeeMax?"var(--danger)":"var(--text)"}">${e.coffee||0}</span>
+            <button class="counter-btn" onclick="currentEntry.coffee=(currentEntry.coffee||0)+1;render()">+</button>
+          </div>
+          <div class="progress"><div class="progress-fill" style="width:${Math.min(100,(e.coffee||0)/GOALS.coffeeMax*100)}%;background:${(e.coffee||0)>GOALS.coffeeMax?"var(--danger)":"var(--purple)"}"></div></div>
+          <span style="font-size:10px;color:var(--text3);margin-top:2px">max: ${GOALS.coffeeMax}</span>
+        </div>
+      </div>
+
+      <!-- Creatine -->
+      <div class="input-group"><label class="label">⚡ Creatine</label>
+        <div class="toggle-row">
+          <button class="toggle" style="background:${e.creatine?"var(--green)":"var(--border2)"}" onclick="currentEntry.creatine=!currentEntry.creatine;render()">
+            <div class="toggle-dot" style="transform:translateX(${e.creatine?24:2}px)"></div>
+          </button>
+          <span style="color:${e.creatine?"var(--green)":"var(--text3)"};font-size:14px;font-weight:600">${e.creatine?GOALS.creatine+"g ingenomen ✓":"Niet ingenomen"}</span>
+        </div>
+      </div>
+
+      <!-- Training -->
+      <div class="input-group"><label class="label">🏋️ Training</label>
+        <div class="training-btns">
+          ${[{v:"gym-a",l:"Gym A",i:"🏋️"},{v:"gym-b",l:"Gym B",i:"💪"},{v:"loopband",l:"Loopband",i:"🚶"},{v:"rust",l:"Rust",i:"😴"}].map(t=>`
+            <button class="training-btn ${e.training===t.v?"active":""}" onclick="currentEntry.training='${t.v}';render()">
+              <span class="training-icon">${t.i}</span>${t.l}
+            </button>`).join("")}
+        </div>
+      </div>
+
+      ${e.training==="loopband"?`
+      <!-- Treadmill -->
+      <div class="tm-panel">
+        <div class="tm-header"><span>🚶</span><strong style="color:var(--text)">Loopband sessie</strong><span class="tm-cal-badge">🔥 ${tmCal} kcal</span></div>
+        <div style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <label class="label">Snelheid</label>
+            <span style="font-size:18px;font-weight:900;color:${(e.treadmill?.speed||4)>=6?"var(--yellow)":"var(--green)"}">${(e.treadmill?.speed||4).toFixed(1)} km/u</span>
+          </div>
+          <input type="range" min="2" max="12" step="0.5" value="${e.treadmill?.speed||4}" oninput="currentEntry.treadmill=currentEntry.treadmill||{};currentEntry.treadmill.speed=parseFloat(this.value);render()">
+          <div class="slider-labels"><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span><span>12</span></div>
+          <div style="text-align:center;margin-top:4px;font-size:11px;color:var(--text3)">${speedLabel(e.treadmill?.speed||4)}</div>
+        </div>
+        <div style="margin-top:16px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <label class="label">Duur</label>
+            <span style="font-size:18px;font-weight:900;color:var(--blue)">${e.treadmill?.duration||60} min</span>
+          </div>
+          <input type="range" min="10" max="240" step="5" value="${e.treadmill?.duration||60}" oninput="currentEntry.treadmill=currentEntry.treadmill||{};currentEntry.treadmill.duration=parseInt(this.value);render()">
+          <div class="slider-labels"><span>10m</span><span>1u</span><span>2u</span><span>3u</span><span>4u</span></div>
+        </div>
+        <div class="tm-summary">
+          <div class="tm-sum-item"><span class="tm-sum-lbl">AFSTAND</span><span class="tm-sum-val" style="color:var(--text)">${((e.treadmill?.speed||4)*(e.treadmill?.duration||60)/60).toFixed(1)} km</span></div>
+          <div style="width:1px;height:28px;background:var(--border2)"></div>
+          <div class="tm-sum-item"><span class="tm-sum-lbl">VERBRANDING</span><span class="tm-sum-val" style="color:var(--orange)">${tmCal} kcal</span></div>
+          <div style="width:1px;height:28px;background:var(--border2)"></div>
+          <div class="tm-sum-item"><span class="tm-sum-lbl">NETTO</span><span class="tm-sum-val" style="color:var(--green)">${GOALS.calories+tmCal}</span></div>
+        </div>
+      </div>`:""}
+
+      <!-- Notes -->
+      <div class="input-group"><label class="label">📝 Notities</label>
+        <textarea class="textarea" rows="2" placeholder="Hoe voel je je?" onchange="currentEntry.notes=this.value">${e.notes||""}</textarea>
+      </div>
+    </div>
+
+    <div class="action-row">
+      <button class="save-btn" onclick="save();this.textContent='✓ Opgeslagen!';setTimeout(()=>{this.textContent='💾 Opslaan'},2000)">💾 Opslaan</button>
+      ${state.entries[state.selectedDate]?`<button class="delete-btn" onclick="if(confirm('Dag verwijderen?'))deleteDay()">🗑️</button>`:""}
+    </div>
+    </div>`;
+  }
+
+  // ═══ VOEDING VIEW ═══
+  if(state.view==="voeding"){
+    h+=`<div class="section">${datePicker}
+    <div class="food-mode-row">
+      <button class="food-mode-btn ${state.foodMode==="manual"?"active":""}" onclick="state.foodMode='manual';stopCamera();render()">✏️ Handmatig</button>
+      <button class="food-mode-btn ${state.foodMode==="barcode"?"active":""}" onclick="state.foodMode='barcode';stopCamera();render()">🔢 Barcode</button>
+      <button class="food-mode-btn ${state.foodMode==="scan"?"active":""}" onclick="state.foodMode='scan';startCamera()">📷 Scan</button>
+    </div>
+
+    ${state.foodMode==="manual"?`
+    <div style="margin-bottom:20px">
+      <label class="label">Voeg item toe</label>
+      <p style="color:var(--text3);font-size:12px;margin:4px 0 8px">Vul naam, calorieën en eiwit in</p>
+      <div class="food-add-grid">
+        <input class="input" id="f-name" placeholder="bv. Boterham kaas">
+        <input class="input" id="f-cal" type="number" placeholder="Kcal">
+        <input class="input" id="f-prot" type="number" placeholder="Eiwit g">
+      </div>
+      <button class="food-btn" onclick="
+        const n=document.getElementById('f-name').value;
+        const c=parseInt(document.getElementById('f-cal').value)||0;
+        const p=parseFloat(document.getElementById('f-prot').value)||0;
+        if(n){addFood({name:n,calories:c,protein:p,amount:'1 portie'});
+          document.getElementById('f-name').value='';document.getElementById('f-cal').value='';document.getElementById('f-prot').value='';}
+      ">➕ Toevoegen</button>
+    </div>`:""}
+
+    ${state.foodMode==="barcode"?`
+    <div style="margin-bottom:20px">
+      <label class="label">Voer barcode in</label>
+      <p style="color:var(--text3);font-size:12px;margin:4px 0 8px">Typ het nummer onder de streepjescode</p>
+      <div style="display:flex;gap:8px">
+        <input class="input" id="barcode-in" type="text" inputmode="numeric" placeholder="bv. 4260556630021" style="flex:1">
+        <button class="food-btn" style="width:auto;padding:12px 20px;margin-top:0" onclick="
+          const c=document.getElementById('barcode-in').value.replace(/\\D/g,'');
+          if(c){document.getElementById('barcode-in').value='Zoeken...';handleBarcode(c)}
+        ">🔍</button>
+      </div>
+    </div>`:""}
+
+    ${state.foodMode==="scan"?`
+    <div style="margin-bottom:20px">
+      <label class="label">Scan barcode met camera</label>
+      <div class="camera-wrap">
+        <video id="cam-video" class="camera-video" playsinline muted></video>
+        ${state.scanning?'<div class="camera-scanline"></div>':'<div class="camera-placeholder"><span style="font-size:40px">📷</span><p style="color:var(--text3);font-size:13px">Camera wordt gestart...</p></div>'}
+      </div>
+      ${state.scanning?'<button class="stop-cam-btn" onclick="stopCamera();render()">✕ Camera sluiten</button>':""}
+    </div>`:""}
+
+    ${errorMsg?`<div class="food-error">⚠️ ${errorMsg}</div>`:""}
+
+    <!-- Totals -->
+    <div class="food-totals">
+      <div class="food-total-item">
+        <span class="food-total-lbl">KCAL</span>
+        <span class="food-total-val" style="color:${fCal>GOALS.calories?"var(--danger)":fCal>GOALS.calories*.9?"var(--yellow)":"var(--green)"}">${fCal}</span>
+        <span style="font-size:11px;color:var(--text4)">/ ${GOALS.calories}</span>
+      </div>
+      <div class="qs-div"></div>
+      <div class="food-total-item">
+        <span class="food-total-lbl">EIWIT</span>
+        <span class="food-total-val" style="color:${fProt>=GOALS.protein?"var(--green)":"var(--yellow)"}">${Math.round(fProt)}g</span>
+        <span style="font-size:11px;color:var(--text4)">/ ${GOALS.protein}g</span>
+      </div>
+      <div class="qs-div"></div>
+      <div class="food-total-item">
+        <span class="food-total-lbl">ITEMS</span>
+        <span class="food-total-val">${foods.length}</span>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div style="margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:11px;color:var(--text3)">Calorieën</span><span style="font-size:11px;color:var(--text3)">${Math.round(fCal/GOALS.calories*100)}%</span></div>
+      <div class="progress"><div class="progress-fill" style="width:${Math.min(100,fCal/GOALS.calories*100)}%;background:${fCal>GOALS.calories?"var(--danger)":"var(--green)"}"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;margin-top:10px"><span style="font-size:11px;color:var(--text3)">Eiwit</span><span style="font-size:11px;color:var(--text3)">${Math.round(fProt/GOALS.protein*100)}%</span></div>
+      <div class="progress"><div class="progress-fill" style="width:${Math.min(100,fProt/GOALS.protein*100)}%;background:${fProt>=GOALS.protein?"var(--green)":"var(--yellow)"}"></div></div>
+    </div>
+
+    <h2 class="section-title">Voedingslog</h2>
+    ${foods.length?foods.map(f=>`
+      <div class="food-item">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+          ${f.image?`<img src="${f.image}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0">`:""}
+          <div style="min-width:0">
+            <div class="food-item-name">${f.name}${f.brand?`<span style="color:var(--text3);font-weight:400"> · ${f.brand}</span>`:""}</div>
+            <div class="food-item-meta">${f.amount||""}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <div class="food-item-macros">
+            <span style="color:var(--yellow)">${f.calories} kcal</span>
+            <span style="color:var(--purple)">${f.protein}g eiwit</span>
+          </div>
+          <button class="food-del" onclick="removeFood(${f.id})">✕</button>
+        </div>
+      </div>`).join(""):`
+      <div class="empty-food"><span style="font-size:32px">🍽️</span><p style="color:var(--text4);font-size:13px;margin-top:8px">Nog niets. Voeg items toe via handmatig, barcode of scan.</p></div>`}
+
+    <button class="save-btn" onclick="save();this.textContent='✓ Opgeslagen!';setTimeout(()=>{this.textContent='💾 Dag opslaan'},2000)">💾 Dag opslaan</button>
+    </div>`;
+  }
+
+  // ═══ STATS VIEW ═══
+  if(state.view==="stats"){
+    h+=`<div class="section">
+    <h2 class="section-title">Calorieën (14 dagen)</h2>
+    ${s.calData.length?`
+    <div class="chart-wrap">
+      <div class="chart-bar-row" style="padding-bottom:24px">
+        ${s.calData.map(d=>{
+          const pct=Math.min(100,d.cal/3000*100);
+          const col=d.cal>GOALS.calories?"var(--danger)":d.cal>GOALS.calories*.9?"var(--yellow)":"var(--green)";
+          return`<div class="chart-bar" style="height:${pct}%;background:${col}"><span class="chart-bar-val" style="color:${col}">${d.cal}</span><span class="chart-bar-label">${d.date}</span></div>`;
+        }).join("")}
+      </div>
+      <div style="text-align:center;margin-top:4px;font-size:12px;color:var(--text3)">— Doel: ${GOALS.calories} kcal</div>
+    </div>`:`<p class="empty-text">Nog geen caloriedata.</p>`}
+
+    <h2 class="section-title" style="margin-top:32px">Training</h2>
+    <div class="stats-row">
+      ${["gym-a","gym-b","loopband","rust"].map(t=>{
+        const c=s.dates.filter(d=>state.entries[d].training===t).length;
+        const l={"gym-a":"Gym A","gym-b":"Gym B",loopband:"Loop",rust:"Rust"};
+        const i={"gym-a":"🏋️","gym-b":"💪",loopband:"🚶",rust:"😴"};
+        return`<div class="stat-card"><span style="font-size:24px">${i[t]}</span><span class="stat-val">${c}</span><span class="stat-lbl">${l[t]}</span></div>`;
+      }).join("")}
+    </div>
+
+    ${s.tmDays?`
+    <h2 class="section-title" style="margin-top:32px">Loopband totalen</h2>
+    <div class="stats-row">
+      <div class="stat-card"><span style="font-size:24px;color:var(--orange)">${s.tmCal}</span><span class="qs-label">kcal</span></div>
+      <div class="stat-card"><span style="font-size:24px;color:var(--blue)">${s.tmKm.toFixed(1)}</span><span class="qs-label">km</span></div>
+      <div class="stat-card"><span style="font-size:24px;color:var(--purple)">${Math.floor(s.tmMin/60)}u${s.tmMin%60}m</span><span class="qs-label">tijd</span></div>
+    </div>`:""}
+
+    <h2 class="section-title" style="margin-top:32px">Creatine</h2>
+    <div class="stats-row">
+      <div class="stat-card"><span style="font-size:28px;color:var(--green)">${s.crDays}</span><span class="qs-label">ingenomen</span></div>
+      <div class="stat-card"><span style="font-size:28px;color:var(--yellow)">${s.crStreak}</span><span class="qs-label">streak</span></div>
+      <div class="stat-card"><span style="font-size:28px;color:var(--purple)">${s.total?Math.round(s.crDays/s.total*100):0}%</span><span class="qs-label">score</span></div>
+    </div>
+
+    <h2 class="section-title" style="margin-top:32px">Hydratatie</h2>
+    <div class="stats-row">
+      <div class="stat-card"><span style="font-size:28px;color:var(--blue)">${s.avgWater}</span><span class="qs-label">gem. water</span></div>
+      <div class="stat-card"><span style="font-size:28px;color:var(--purple)">${s.avgCoffee}</span><span class="qs-label">gem. koffie</span></div>
+      <div class="stat-card"><span style="font-size:28px;color:var(--green)">${s.waterPct}%</span><span class="qs-label">water doel</span></div>
+    </div>
+    </div>`;
+  }
+
+  // ═══ WEIGHT VIEW ═══
+  if(state.view==="weight"){
+    h+=`<div class="section">
+    <h2 class="section-title">Gewichtsverloop</h2>
+    ${s.weightData.length>1?`
+    <div class="chart-wrap">
+      <div class="chart-bar-row" style="padding-bottom:24px;align-items:flex-end">
+        ${(()=>{
+          const min=Math.min(...s.weightData.map(d=>d.weight))-2;
+          const max=Math.max(...s.weightData.map(d=>d.weight))+2;
+          const range=max-min;
+          return s.weightData.map(d=>{
+            const pct=((d.weight-min)/range)*100;
+            return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%">
+              <div style="flex:1;display:flex;align-items:flex-end;width:100%">
+                <div style="width:100%;height:${pct}%;background:var(--red);border-radius:4px 4px 0 0;min-height:4px;position:relative">
+                  <span style="position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:var(--text);white-space:nowrap">${d.weight}</span>
+                </div>
+              </div>
+              <span style="font-size:9px;color:var(--text3);margin-top:4px">${d.date}</span>
+            </div>`;
+          }).join("");
+        })()}
+      </div>
+    </div>`:`<p class="empty-text">${s.weightData.length===1?"Log nog een paar dagen.":"Nog geen gewichtsdata."}</p>`}
+
+    <h2 class="section-title" style="margin-top:32px">Mijlpalen</h2>
+    ${[115,112.5,110,107.5,105].map(t=>{
+      const reached=s.last&&s.last<=t;
+      return`<div class="milestone ${reached?"reached":"pending"}">
+        <span style="font-size:20px">${reached?"✅":"⬜"}</span>
+        <span style="color:${reached?"var(--green)":"var(--text2)"};font-weight:700;font-size:16px">${t} kg</span>
+        ${t===GOALS.targetWeight?'<span class="target-badge">DOEL</span>':""}
+      </div>`;
+    }).join("")}
+
+    <h2 class="section-title" style="margin-top:32px">Laatste metingen</h2>
+    ${s.weightData.length?[...s.weightData].reverse().slice(0,10).map(d=>`
+      <div class="recent-item">
+        <span style="color:var(--text2);font-size:13px">${d.day} ${d.date}</span>
+        <span style="font-weight:700;font-variant-numeric:tabular-nums">${d.weight} kg</span>
+      </div>`).join(""):`<p class="empty-text">Nog geen metingen.</p>`}
+    </div>`;
+  }
+
+  h+=`<div class="footer">PHOENIX BIO × Fitness Tracker</div>`;
+
+  document.getElementById("app").innerHTML=h;
+
+  // Restart camera if in scan mode
+  if(state.view==="voeding"&&state.foodMode==="scan"&&state.scanning){
+    const vid=document.getElementById("cam-video");
+    if(vid&&videoStream){vid.srcObject=videoStream;vid.play()}
+  }
+}
+
+render();
+</script>
+</body>
+</html>
